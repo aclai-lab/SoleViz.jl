@@ -1,4 +1,4 @@
-module SoleVisualizations
+module SoleViz
 
 using Reexport
 using SoleBase
