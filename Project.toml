@@ -1,4 +1,4 @@
-name = "SoleVisualizations"
+name = "SoleViz"
 uuid = "fc840457-d78a-47de-ac4f-ba01d7af495c"
 authors = ["Eduard I. STAN", "Giovanni PAGLIARINI", "Federico MANZELLA"]
 version = "0.1.0"

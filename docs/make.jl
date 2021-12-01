@@ -1,16 +1,16 @@
-using SoleVisualizations
+using SoleViz
 using Documenter
 
-DocMeta.setdocmeta!(SoleVisualizations, :DocTestSetup, :(using SoleVisualizations); recursive=true)
+DocMeta.setdocmeta!(SoleViz, :DocTestSetup, :(using SoleViz); recursive=true)
 
 makedocs(;
-    modules=[SoleVisualizations],
+    modules=[SoleViz],
     authors="Eduard I. STAN, Giovanni PAGLIARINI, Federico MANZELLA",
-    repo="https://github.com/aclai-lab/SoleVisualizations.jl/blob/{commit}{path}#{line}",
-    sitename="SoleVisualizations.jl",
+    repo="https://github.com/aclai-lab/SoleViz.jl/blob/{commit}{path}#{line}",
+    sitename="SoleViz.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://aclai-lab.github.io/SoleVisualizations.jl",
+        canonical="https://aclai-lab.github.io/SoleViz.jl",
         assets=String[],
     ),
     pages=[
@@ -19,6 +19,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/aclai-lab/SoleVisualizations.jl",
+    repo="github.com/aclai-lab/SoleViz.jl",
     devbranch="main",
 )

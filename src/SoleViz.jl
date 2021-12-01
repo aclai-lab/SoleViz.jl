@@ -1,4 +1,4 @@
-module SoleVisualizations
+module SoleViz
 
 # Write your package code here.
 

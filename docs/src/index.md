@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = SoleVisualizations
+CurrentModule = SoleViz
 ```
 
-# SoleVisualizations
+# SoleViz
 
-Documentation for [SoleVisualizations](https://github.com/aclai-lab/SoleVisualizations.jl).
+Documentation for [SoleViz](https://github.com/aclai-lab/SoleViz.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [SoleVisualizations]
+Modules = [SoleViz]
 ```
