@@ -5,7 +5,7 @@ TODO: docs
 - Support more than one descriptor in `descriptors`
 - Support more than one function in `functions`
 - Support `attribute_order` to order attributes in plots
-- Implement `plot_dimesion` support 3D visualizations for windows
+- Implement `plot_dimension` support 3D visualizations for windows
 - Add more user-friendly interface for `windows` parameter
 """
 function plotdescription(
@@ -15,11 +15,24 @@ function plotdescription(
 	plot_kwargs::NamedTuple = NamedTuple(),
 	attribute_order::Symbol = :keep, # :increasing, :decreasing # TODO
 	layout::Symbol = :triangle, # :rectangle :pyramid
-	plot_dimesion::Symbol = :twoD, # :threeD # TODO
+	plot_dimension::Symbol = :twoD, # :threeD # TODO
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}} =
-		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]]
+		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
+	descriptions::Union{AbstractVector{<:AbstractVector{<:AbstractDataFrame}},Nothing} = nothing
 )
 	# TODO: add assertions for Symbol kwargs
+
+	allowed_plot_dimensionts = [:twoD, :threeD]
+	@assert plot_dimension in allowed_plot_dimensionts "Value `$(plot_dimension)` not " *
+		"allowed: available are $(allowed_plot_dimensionts)"
+
+	allowed_attribute_order = [:keep, :increasing, :decreasing]
+	@assert attribute_order in allowed_attribute_order "Value `$(attribute_order)` not " *
+		"allowed: available are $(allowed_attribute_order)"
+
+	allowed_layout = [:triangle, :rectangle, :pyramid]
+	@assert layout in allowed_layout "Value `$(layout)` not " *
+		"allowed: available are $(allowed_layout)"
 
 	# concat symbols
 	cs(s1::Symbol, s2::Symbol) = Symbol(string(s1, "_", s2))
@@ -32,10 +45,12 @@ function plotdescription(
 		[d for w in windows for frame in w for d in w]...
 	)])
 
-	descriptions = Vector{Vector{DataFrame}}(undef, length(windows))
+	if isnothing(descriptions)
+		descriptions = Vector{Vector{DataFrame}}(undef, length(windows))
 
-	Threads.@threads for (i, win) in collect(enumerate(windows))
-		descriptions[i] = describe(mfd; desc = descriptors, t = win)
+		Threads.@threads for (i, win) in collect(enumerate(windows))
+			descriptions[i] = describe(mfd; desc = descriptors, t = win)
+		end
 	end
 
 	num_dimensional_frame = length(filter(x -> x isa Number && x > 0, dimension(mfd)))
@@ -81,19 +96,23 @@ function plotdescription(
 		end
 	end
 
-	# if layout == :triangle
+	if plot_dimension == :twoD
+		# if layout == :triangle
 		return [plot(permutedims(pyr)..., layout = size(pyr)) for pyr in plot_pyramids]
-	# elseif layout == :rectangle
-	# 	res = Plots.Plot[]
-	# 	for pyr in plot_pyramids
-	# 		ts = [countassigned(pyr[i,:]) for i in 1:size(pyr, 1)]
-	# 		l = @layout [ for ]
-	# 		p = plot(
-	# 			permutedims(pyr)...,
-	# 			layout = size(pyr)
-	# 		)
-	# 		push!(res, p)
-	# 	end
-	# 	return res
-	# end
+		# elseif layout == :rectangle
+		# 	res = Plots.Plot[]
+		# 	for pyr in plot_pyramids
+		# 		ts = [countassigned(pyr[i,:]) for i in 1:size(pyr, 1)]
+		# 		l = @layout [ for ]
+		# 		p = plot(
+		# 			permutedims(pyr)...,
+		# 			layout = size(pyr)
+		# 		)
+		# 		push!(res, p)
+		# 	end
+		# 	return res
+		# end
+	elseif plot_dimension == :threeD
+		return [plot(permutedims(pyr)..., layout = size(pyr)) for pyr in plot_pyramids]
+	end
 end
