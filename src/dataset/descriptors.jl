@@ -1,6 +1,4 @@
 
-using DataStructures
-
 """
 TODO: docs
 # TODOs
@@ -81,7 +79,7 @@ function plotdescription(
 
 	# For each frame
 	for (i_frame, dim) in enumerate(dimension(mfd))
-		
+
 		if dim isa Symbol
 			# throw(ErrorException("`plotdescription` still not implemented for `$(dim)` frames"))
 			continue
@@ -91,7 +89,7 @@ function plotdescription(
 		end
 
 		for (i_win, win) in enumerate(windows)
-			
+
 			curr_frame_window = win[i_frame]
 
 			if on_x_axis == :attributes
@@ -102,7 +100,7 @@ function plotdescription(
 						names = d[:,1]
 						n_attributes = nrow(d)
 						col = cs(descriptor, nameof(functions[1]))
-						
+
 						x = collect(1:n_attributes)
 						ys = d[:,col]
 
