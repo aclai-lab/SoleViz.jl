@@ -21,6 +21,8 @@ function plotdescription(
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}} =
 		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
 	on_x_axis = :attributes, # :
+	attribute_names = nothing,
+	join_plots = [],
 )
 	# TODO: add assertions for Symbol kwargs
 	@assert windows == [[[(1,0,0)]]] "$(windows)"
@@ -49,11 +51,6 @@ function plotdescription(
 	n_attributes_per_frame = mfd[1:end].|>ncol
 	max_n_attributes = (n_attributes_per_frame)|>maximum
 	# println(num_dimensional_frame)
-	plot_pyramids = Array{Plots.Plot}(undef, length(windows), pyramid_base_length, (on_x_axis == :attributes ? length(descriptors) : max_n_attributes), num_dimensional_frame)
-
-	for i in 1:length(plot_pyramids)
-		plot_pyramids[i] = bp()
-	end
 
 	stats = Vector{Vector{Vector{Vector{DataFrame}}}}(undef, length(descriptors))
 
@@ -76,6 +73,15 @@ function plotdescription(
 				push!(_stats, d)
 			end
 			push!(stats[i_descriptor_group], _stats)
+		end
+	end
+	
+	if join_plots
+		mega_plot = bp()
+	else
+		plot_pyramids = Array{Plots.Plot}(undef, length(windows), pyramid_base_length, (on_x_axis == :attributes ? length(descriptors) : max_n_attributes), num_dimensional_frame)
+		for i in 1:length(plot_pyramids)
+			plot_pyramids[i] = bp()
 		end
 	end
 
@@ -107,12 +113,12 @@ function plotdescription(
 						ys = d[:,col]
 
 						for i_chunk in 1:pyramid_base_length
-							plot!(plot_pyramids[i_win, i_chunk, i_descriptor_group, num_dimensional_frame],
+							plot!((join_plots ? mega_plot : plot_pyramids[i_win, i_chunk, i_descriptor_group, num_dimensional_frame]),
 								x,
 								# TODO: generalize on n-th function in functions
 								[v[i_chunk] for v in ys],
 								labels = string(col),
-								title = "$(descriptor_group_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")",
+								title = (join_plots ? "" : "$(descriptor_group_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")"),
 								xticks = (1:length(x), string.(names)),
 								xrotation = 65,
 							)
@@ -132,12 +138,13 @@ function plotdescription(
 					names = [cs(descriptor, nameof(functions[1])) for (d,descriptor) in ds]
 					# println(ys)
 					for i_chunk in 1:pyramid_base_length
-						plot!(plot_pyramids[i_win, i_chunk, i_attribute, num_dimensional_frame],
+						attribute_name = isnothing(attribute_names) ? "A$(i_attribute)" : attribute_names[i_attribute]
+						plot!((join_plots ? mega_plot : plot_pyramids[i_win, i_chunk, i_attribute, num_dimensional_frame]),
 							x,
 							# TODO: generalize on n-th function in functions
 							[v[i_chunk] for v in ys],
-							labels = string("A$(i_attribute)"),
-							title = "A$(i_attribute)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")",
+							labels = string("$(attribute_name)"),
+							title = (join_plots ? "" : "$(attribute_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")"),
 							xticks = (1:length(x), string.(names)),
 							xrotation = 65,
 						)
@@ -147,10 +154,9 @@ function plotdescription(
 		end
 	end
 
-
 	# if layout == :triangle
 		# return [plot(permutedims(pyr)..., layout = size(pyr)) for pyr in plot_pyramids]
-	return plot_pyramids
+	return (join_plots ? [mega_plot] : plot_pyramids)
 	# elseif layout == :rectangle
 	# 	res = Plots.Plot[]
 	# 	for pyr in plot_pyramids
