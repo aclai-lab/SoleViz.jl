@@ -1,13 +1,11 @@
 
-using DataStructures
-
 """
 TODO: docs
 # TODOs
 - Support more than one descriptor in `descriptors`
 - Support more than one function in `functions`
 - Support `attribute_order` to order attributes in plots
-- Implement `plot_dimesion` support 3D visualizations for windows
+- Implement `plot_dimension` support 3D visualizations for windows
 - Add more user-friendly interface for `windows` parameter
 """
 function plotdescription(
@@ -17,17 +15,29 @@ function plotdescription(
 	plot_kwargs::NamedTuple = NamedTuple(),
 	attribute_order::Symbol = :keep, # :increasing, :decreasing # TODO
 	layout::Symbol = :triangle, # :rectangle :pyramid
-	plot_dimesion::Symbol = :twoD, # :threeD # TODO
+	plot_dimension::Symbol = :twoD, # :threeD # TODO
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}} =
 		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
 	on_x_axis = :attributes, # :
 	attribute_names = nothing,
 	join_plots = [],
+	descriptions::Union{AbstractVector{<:AbstractVector{<:AbstractDataFrame}},Nothing} = nothing # TODO: allow passing  already computed description
 )
-	# TODO: add assertions for Symbol kwargs
 	@assert windows == [[[(1,0,0)]]] "$(windows)"
 	@assert length(functions) == 1
 	@assert on_x_axis in [:descriptors, :attributes]
+
+	allowed_plot_dimensionts = [:twoD, :threeD]
+	@assert plot_dimension in allowed_plot_dimensionts "Value `$(plot_dimension)` not " *
+		"allowed: available are $(allowed_plot_dimensionts)"
+
+	allowed_attribute_order = [:keep, :increasing, :decreasing]
+	@assert attribute_order in allowed_attribute_order "Value `$(attribute_order)` not " *
+		"allowed: available are $(allowed_attribute_order)"
+
+	allowed_layout = [:triangle, :rectangle, :pyramid]
+	@assert layout in allowed_layout "Value `$(layout)` not " *
+		"allowed: available are $(allowed_layout)"
 
 	# concat symbols
 	cs(s1::Symbol, s2::Symbol) = Symbol(string(s1, "_", s2))
@@ -87,7 +97,7 @@ function plotdescription(
 
 	# For each frame
 	for (i_frame, dim) in enumerate(dimension(mfd))
-		
+
 		if dim isa Symbol
 			# throw(ErrorException("`plotdescription` still not implemented for `$(dim)` frames"))
 			continue
@@ -97,7 +107,7 @@ function plotdescription(
 		end
 
 		for (i_win, win) in enumerate(windows)
-			
+
 			curr_frame_window = win[i_frame]
 
 			if on_x_axis == :attributes
@@ -108,7 +118,7 @@ function plotdescription(
 						names = d[:,1]
 						n_attributes = nrow(d)
 						col = cs(descriptor, nameof(functions[1]))
-						
+
 						x = collect(1:n_attributes)
 						ys = d[:,col]
 
