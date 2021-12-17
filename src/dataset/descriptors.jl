@@ -18,9 +18,9 @@ function plotdescription(
 	plot_dimension::Symbol = :twoD, # :threeD # TODO
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}} =
 		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
-	on_x_axis = :attributes, # :
-	attribute_names = nothing,
-	join_plots = [],
+	on_x_axis::Symbol = :attributes, # :
+	attribute_names::Union{<:AbstractVector{<:AbstractString},Nothing} = nothing,
+	join_plots::Bool = false,
 	descriptions::Union{AbstractVector{<:AbstractVector{<:AbstractDataFrame}},Nothing} = nothing # TODO: allow passing  already computed description
 )
 	@assert windows == [[[(1,0,0)]]] "$(windows)"
