@@ -7,8 +7,7 @@ using DataStructures
 @reexport using Plots
 
 export plotdescription
-export _preparedescription
-export _createdescription
+export _plotdescription
 
 include("dataset/descriptors.jl")
 
