@@ -9,123 +9,136 @@ TODO: docs
 - Implement `plot_dimension` support 3D visualizations for windows
 - Add more user-friendly interface for `windows` parameter
 """
-
 function plotdescription(
 	mfd::AbstractMultiFrameDataset;
-	group_descriptors::AbstractDict{<:Any,<:AbstractVector{<:Symbol}},
-	windows::AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}} =
-		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]]
-	)
-	
+	group_descriptors::Union{ # TODO: this should be a Dict{framedimension,itself}
+		<:AbstractVector{Symbol},
+		<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}
+	},
+	windows::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}} =
+		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
+	cache_descriptions::Union{<:AbstractString,Nothing} = nothing,
+	kwargs...
+)
+	# TODO: support multiple windows
 	@assert windows == [[[(1,0,0)]]] "$(windows)"
-	# @assert length(windows[1]) == 1
 
-	# num_dimensional_frame = length(filter(x -> x isa Number && x > 0, dimension(mfd)))
-	# n_attributes_per_frame = mfd[1:end].|>ncol
+	group_descriptors = _descriptors2grouped(group_descriptors)
+	desc = _grouped2descriptors(group_descriptors)
 
-	descriptions = Vector{DataFrame}[]
-	desc = Symbol[]
+	descriptions = Vector{Vector{DataFrame}}(undef, _nwindows(windows))
 
-	for (i_group,descriptors) in group_descriptors
-		for descriptor in descriptors
-			push!(desc, descriptor)
-		end
+	Threads.@threads for (i, curr_windows) in collect(enumerate(windows))
+		descriptions[i] =
+			if !isnothing(cache_descriptions)
+				# TODO: @scachefast "description" cache_descriptions
+				SoleBase.describe(mfd, desc = desc, t = curr_windows)
+			else
+				SoleBase.describe(mfd, desc = desc, t = curr_windows)
+			end
 	end
 
-	push!(descriptions, SoleBase.describe(mfd, desc = desc, t = windows[1]))
-
-	n_windows = Vector{Vector{Vector{Vector{Tuple{Int64, Int64, Int64}}}}}(undef, 1)
-	n_windows[1] = Vector{Vector{Tuple{Int64, Int64, Int64}}}[]
-	n_windows[1] = windows
-
-	results = plotdescription(descriptions, group_descriptors = group_descriptors, n_windows = n_windows)
-
-	return results
+	return plotdescription(
+		descriptions;
+		group_descriptors = group_descriptors,
+		kwargs...
+	)
 end
 
 function plotdescription(
 	descriptions::AbstractVector{<:AbstractVector{<:AbstractDataFrame}};
-	group_descriptors::AbstractDict{<:Any,<:AbstractVector{<:Symbol}},
+	group_descriptors::Union{ # TODO: this should be a Dict{framedimension,itself}
+		Nothing,
+		<:AbstractVector{Symbol},
+		<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}
+	} = nothing,
+	cache_stats::Union{<:AbstractString,Nothing} = nothing,
 	functions::AbstractVector{Function} = Function[var],
-	n_windows::Union{Nothing,AbstractVector{<:AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}}}} = nothing
-	)
+	kwargs...
+)
+	if isnothing(group_descriptors)
+		group_descriptors = _attributes(descriptions)
+	end
 
-	@assert n_windows == [[[[(1,0,0)]]]] "$(windows)"
+	windows = _get_win(descriptions)
+
+	# TODO: support multiple windows
+	@assert windows == [[[(1,0,0)]]] "$(windows)"
+	# TODO: support multiple functions
 	@assert length(functions) == 1
 
-	num_dimensional_frames = Integer[]
-	n_attributes_per_frames = Vector{Vector{Integer}}(undef, length(descriptions))
-	for (i_description,description) in enumerate(descriptions)
-		push!(num_dimensional_frames, length(description))
-		n_attributes_per_frames[i_description] = Integer[]
-		for (i_frame, frame) in enumerate(description)
-			push!(n_attributes_per_frames[i_description], nrow(description[i_frame]))
-		end
-	end	
-
-	
-	# if n_windows == nothing
-	# 	n_windows = AbstractVector{<:AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}}}(undef, length(descriptions))
-		
-	# 	for (i_description,description) in enumerate(descriptions)
-	# 		n_windows[i_description] = Vector{Vector{Tuple{Int64, Int64, Int64}}}[]
-	# 		n_windows[i_description] = [[[(size(description[1][1,2])[2], 0, 0)]]]
-	# 		# nts = [[[(size(description[1][1,2])[2], 0, 0)]]]
+	# TODO: add this to support different
+	# all_descriptors = Vector{Vector{Symbol}}(undef, _ndescriptions(descriptions))
+	# for i_desc in 1:_descriptions(descriptions)
+	# 	all_descriptors[i_desc] = Vector{Symbol}(undef, _nframes(descriptions))
+	# 	for i_frame 1:_nframes(descriptions[i_desc])
+	# 		all_descriptors[i_desc][i_frame] = _descriptors2grouped(group_descriptors)
 	# 	end
-
-
 	# end
+	singleton_groups = group_descriptors isa AbstractVector
 
+	group_descriptors = _descriptors2grouped(group_descriptors)
 
 	stats = Vector{Vector{Vector{Vector{DataFrame}}}}(undef, length(group_descriptors))
-	multi_stats = Vector{Vector{Vector{Vector{Vector{DataFrame}}}}}(undef, length(descriptions))	
 
-	for (i_description,description) in enumerate(descriptions)
-		multi_stats[i_description] = Vector{Vector{Vector{DataFrame}}}[]
-		for (i_descriptor_group,(descriptor_group_name,descrs)) in enumerate(group_descriptors) # for each gruop of descriptors
-			stats[i_descriptor_group] = Vector{Vector{DataFrame}}[]
-			println("Processing $(descriptor_group_name)...")
-			
-			for (i_descriptor,descriptor) in enumerate(descrs) # for each descriptor in the gruop
-				_stats = Vector{DataFrame}[]
-				temps = [description[i][:,[Symbol(names(description[1])[1]),descriptor]] for i in 1:length(description)]
-				d = [SoleBase.SoleData.SoleDataset._stat_description(
-					temp;
-					functions = functions,
-				) for temp in temps]
-				push!(_stats, d)
-				push!(stats[i_descriptor_group], _stats)
-				
+	for (i_descriptor_group, (descriptor_group_name, descrs)) in enumerate(group_descriptors) # for each group of descriptors
+		println("Processing $(descriptor_group_name)...")
+		stats[i_descriptor_group] = Vector{Vector{DataFrame}}[]
+		for (i_descriptor, descriptor) in enumerate(descrs) # for each descriptor in the group
+			_stats = Vector{DataFrame}[]
+			if !singleton_groups
+				println("\t$(descriptor)...")
 			end
+
+			Threads.@threads for (i_descriptions, curr_description) in collect(enumerate(descriptions))
+				first_col_name = Symbol(names(curr_description[1])[1])
+
+				# get only `descriptor` for each frame of the current description
+				mono_descriptor_multi_frame_desc = [
+					curr_description[i][:, [first_col_name, descriptor]]
+				for i in 1:_nframes(curr_description)]
+
+				# for the current descriptor get the stats for all descriptions, frame by frame
+				d = [SoleBase.SoleData.SoleDataset._stat_description(
+					mono_desc_i_frame;
+					functions = functions,
+				) for mono_desc_i_frame in mono_descriptor_multi_frame_desc]
+
+				push!(_stats, d)
+			end
+			push!(stats[i_descriptor_group], _stats)
 		end
-		multi_stats[i_description] = stats
-	end
-	results = Vector{Any}(undef, length(multi_stats))
-	for (i_stats, stats) in enumerate(multi_stats)
-		results[i_stats] = _plotdescription(stats; descriptors = group_descriptors, windows = n_windows[i_stats], n_attributes_per_frame = n_attributes_per_frames[i_stats], num_dimensional_frame = num_dimensional_frames[i_stats])
 	end
 
-	return results
-
+	return _plotdescription(
+		stats;
+		descriptors = group_descriptors,
+		functions = functions,
+		windows = windows,
+		# NOTE: number of attributes does not change across different descriptions
+		n_attributes_per_frame = _nattributes(descriptions)[1],
+		# NOTE: number of dimensional frames does not change across different descriptions
+		num_dimensional_frame = _nframes(descriptions)[1],
+		kwargs...
+	)
 end
 
 function _plotdescription(
 	stats::AbstractVector{<:AbstractVector{<:AbstractVector{<:AbstractVector{<:AbstractDataFrame}}}};
-	descriptors::Union{AbstractVector{Symbol},AbstractDict{<:Any,<:AbstractVector{<:Symbol}}},
+	descriptors::Union{<:AbstractVector{Symbol},<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}},
 	functions::AbstractVector{Function} = Function[var],
 	plot_kwargs::NamedTuple = NamedTuple(),
 	attribute_order::Symbol = :keep, # :increasing, :decreasing # TODO
 	layout::Symbol = :triangle, # :rectangle :pyramid
 	plot_dimension::Symbol = :twoD, # :threeD # TODO
-	windows::AbstractVector{<:AbstractVector{<:AbstractVector{NTuple{3,Int}}}} =
-		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
+	windows::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}},
 	on_x_axis::Symbol = :attributes, # :
 	attribute_names::Union{<:AbstractVector{<:AbstractString},Nothing} = nothing,
 	join_plots::Bool = false,
 	n_attributes_per_frame::AbstractVector{<:Integer},
 	num_dimensional_frame::Integer
+)
 
-	)
 	@assert windows == [[[(1,0,0)]]] "$(windows)"
 	@assert length(functions) == 1
 	@assert on_x_axis in [:descriptors, :attributes]
@@ -149,8 +162,8 @@ function _plotdescription(
 	# count assigned values in vector
 	countassigned(v::AbstractVector) = length(findall([isassigned(v, i) for i in 1:length(v)]))
 
-	
-	# println(descriptors)
+	descriptors = _descriptors2grouped(descriptors)
+
 	# Number of plots at the pyramid's base
 	pyramid_base_length = maximum([t[1] for t in vcat(
 		[d for w in windows for frame in w for d in w]...
