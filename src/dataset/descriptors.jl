@@ -30,9 +30,12 @@ function plotdescription(
 
 	Threads.@threads for (i, curr_windows) in collect(enumerate(windows))
 		descriptions[i] =
-			if !isnothing(cache_descriptions)
-				# TODO: @scachefast "description" cache_descriptions
-				SoleBase.describe(mfd, desc = desc, t = curr_windows)
+			if !isnothing(cache_descriptions) && false # TODO: enable caching of stats when package is fixed
+				@scachefast "description" cache_descriptions SoleBase.describe(
+					mfd,
+					desc = desc,
+					t = curr_windows
+				)
 			else
 				SoleBase.describe(mfd, desc = desc, t = curr_windows)
 			end
@@ -99,10 +102,18 @@ function plotdescription(
 				for i in 1:_nframes(curr_description)]
 
 				# for the current descriptor get the stats for all descriptions, frame by frame
-				d = [SoleBase.SoleData.SoleDataset._stat_description(
-					mono_desc_i_frame;
-					functions = functions,
-				) for mono_desc_i_frame in mono_descriptor_multi_frame_desc]
+				d =
+					if !isnothing(cache_stats) && false # TODO: enable caching of stats when package is fixed
+						[(@scachefast "description" cache_stats SoleBase.SoleData.SoleDataset._stat_description(
+							mono_desc_i_frame;
+							functions = functions,
+						)) for mono_desc_i_frame in mono_descriptor_multi_frame_desc]
+					else
+						[(SoleBase.SoleData.SoleDataset._stat_description(
+							mono_desc_i_frame;
+							functions = functions,
+						)) for mono_desc_i_frame in mono_descriptor_multi_frame_desc]
+					end
 
 				push!(_stats, d)
 			end

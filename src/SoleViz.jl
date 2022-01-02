@@ -5,6 +5,8 @@ using SoleBase
 using Statistics
 using DataStructures
 @reexport using Plots
+using SimpleCaching
+# `add https://github.com/ferdiu/SimpleCaching.jl`
 
 export plotdescription
 
