@@ -228,6 +228,7 @@ function _plotdescription(
 								title = (join_plots ? "" : "$(descriptor_group_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")"),
 								xticks = (1:length(x), string.(names)),
 								xrotation = 65,
+								xtickfontrotation = 65,
 								plot_kwargs...
 							)
 						end
@@ -255,6 +256,7 @@ function _plotdescription(
 							title = (join_plots ? "" : "$(attribute_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")"),
 							xticks = (1:length(x), string.(names)),
 							xrotation = 65,
+							xtickfontrotation = 65,
 							plot_kwargs...
 						)
 					end
