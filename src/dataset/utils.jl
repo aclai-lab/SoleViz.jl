@@ -1,4 +1,6 @@
 
+const UVF_VARPREFIX = "V"
+
 ## descriptors
 
 """
