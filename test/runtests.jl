@@ -1,6 +1,6 @@
-using SoleVisualizations
+using SoleViz
 using Test
 
-@testset "SoleVisualizations.jl" begin
+@testset "SoleViz.jl" begin
     # Write your tests here.
 end
