@@ -247,7 +247,7 @@ function _plotdescription(
 					names = [cs(descriptor, nameof(functions[1])) for (d,descriptor) in ds]
 					# println(ys)
 					for i_chunk in 1:pyramid_base_length
-						attribute_name = isnothing(attribute_names) ? "$(UVF_VARPREFIX)$(i_attribute)" : attribute_names[i_attribute]
+						attribute_name = isnothing(attribute_names) ? "$(VARPREFIX)$(i_attribute)" : attribute_names[i_attribute]
 						plot!((join_plots ? mega_plot : plot_pyramids[i_win, i_chunk, i_attribute, num_dimensional_frame]),
 							x,
 							# TODO: generalize on n-th function in functions

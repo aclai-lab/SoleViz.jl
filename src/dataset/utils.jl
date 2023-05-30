@@ -1,5 +1,5 @@
-
-const UVF_VARPREFIX = "V"
+# TODO move to SoleBase
+const VARPREFIX = "V"
 
 ## descriptors
 
