@@ -66,15 +66,15 @@ function _framedims(d::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple
 end
 
 """
-    _nframes(d)
+    _nmodalities(d)
 
-Get the number of frames in `d`.
+Get the number of modalities in `d`.
 """
-function _nframes(d::AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}})
+function _nmodalities(d::AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}})
     return length(d)
 end
-function _nframes(d::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}})
-    return [_nframes(w) for w in d]
+function _nmodalities(d::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}})
+    return [_nmodalities(w) for w in d]
 end
 
 """
@@ -125,7 +125,7 @@ function _get_r(d::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<
     return [_get_r(w) for w in d]
 end
 
-## MFD description object
+## MD description object
 # Vector{Vector{DataFrame}}
 
 function _is_description(dfs::AbstractDataFrame)
@@ -153,9 +153,9 @@ function _framedims(d::AbstractVector{<:AbstractArray})
     return length(d) > 0 ? _framedims(d[1]) : []
 end
 function _framedims(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiFrameDataset description"
+    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
 
-    # NOTE: assumed all attributes have same dimension
+    # NOTE: assumed all variables have same dimension
     return _framedims(d[1,2])
 end
 function _framedims(d::AbstractVector{<:AbstractDataFrame})
@@ -165,13 +165,13 @@ function _framedims(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
     return [_framedims(w) for w in d]
 end
 
-function _nframes(d::AbstractVector{<:AbstractDataFrame})
+function _nmodalities(d::AbstractVector{<:AbstractDataFrame})
     return length(d)
 end
-function _nframes(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
-    return [_nframes(w) for w in d]
+function _nmodalities(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
+    return [_nmodalities(w) for w in d]
 end
-function _nframes(d::AbstractDataFrame)
+function _nmodalities(d::AbstractDataFrame)
     return 1
 end
 
@@ -184,9 +184,9 @@ function _get_win(d::AbstractVector{<:AbstractArray})
     return length(d) > 0 ? _get_win(d[1]) : []
 end
 function _get_win(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiFrameDataset description"
+    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
 
-    # NOTE: assumed all attributes have same dimension
+    # NOTE: assumed all variables have same dimension
     return _get_win(d[1,2])
 end
 function _get_win(d::AbstractVector{<:AbstractDataFrame})
@@ -196,32 +196,32 @@ function _get_win(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
     return [_get_win(w) for w in d]
 end
 
-function _nattributes(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiFrameDataset description"
+function _nvariables(d::AbstractDataFrame)
+    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
 
     return nrow(d)
 end
-function _nattributes(d::AbstractVector{<:AbstractDataFrame})
-    return [_nattributes(frame) for frame in d]
+function _nvariables(d::AbstractVector{<:AbstractDataFrame})
+    return [_nvariables(frame) for frame in d]
 end
-function _nattributes(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
-    return [_nattributes(description) for description in d]
+function _nvariables(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
+    return [_nvariables(description) for description in d]
 end
 
-function _attributes(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiFrameDataset description"
+function _variables(d::AbstractDataFrame)
+    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
 
     return Symbol.(d[:,1])
 end
-function _attributes(d::AbstractVector{<:AbstractDataFrame})
-    return [_attributes(frame) for frame in d]
+function _variables(d::AbstractVector{<:AbstractDataFrame})
+    return [_variables(frame) for frame in d]
 end
-function _attributes(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
-    return [_attributes(description) for description in d]
+function _variables(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
+    return [_variables(description) for description in d]
 end
 
 function _ndescriptors(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiFrameDataset description"
+    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
 
     return ncol(d) - 1
 end
@@ -233,7 +233,7 @@ function _ndescriptors(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
 end
 
 function _descriptors(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiFrameDataset description"
+    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
 
     return Symbol.(names(d)[2:end])
 end
