@@ -1,4 +1,4 @@
-# *SoleViz.jl*
+# SoleViz.jl
 
 <!--
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://aclai-lab.github.io/SoleViz.jl/stable)

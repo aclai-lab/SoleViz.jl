@@ -5,18 +5,18 @@ TODO: docs
 # TODOs
 - Support more than one descriptor in `descriptors`
 - Support more than one function in `functions`
-- Support `attribute_order` to order attributes in plots
+- Support `variable_order` to order variables in plots
 - Implement `plot_dimension` support 3D visualizations for windows
 - Add more user-friendly interface for `windows` parameter
 """
 function plotdescription(
-	mfd::AbstractMultiFrameDataset;
+	md::AbstractMultiModalDataset;
 	group_descriptors::Union{ # TODO: this should be a Dict{framedimension,itself}
 		<:AbstractVector{Symbol},
 		<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}
 	},
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}} =
-		[[[(t,0,0) for i in 1:d] for d in dimension(mfd)] for t in [1,2,4,8]],
+		[[[(t,0,0) for i in 1:d] for d in dimension(md)] for t in [1,2,4,8]],
 	cache_descriptions::Union{<:AbstractString,Nothing} = nothing,
 	kwargs...
 )
@@ -32,12 +32,12 @@ function plotdescription(
 		descriptions[i] =
 			if !isnothing(cache_descriptions)
 				@scachefast "description" cache_descriptions SoleData.describe(
-					mfd,
+					md,
 					desc = desc,
 					t = curr_windows
 				)
 			else
-				SoleData.describe(mfd, desc = desc, t = curr_windows)
+				SoleData.describe(md, desc = desc, t = curr_windows)
 			end
 	end
 
@@ -60,7 +60,7 @@ function plotdescription(
 	kwargs...
 )
 	if isnothing(group_descriptors)
-		group_descriptors = _attributes(descriptions)
+		group_descriptors = _variables(descriptions)
 	end
 
 	windows = _get_win(descriptions)
@@ -73,9 +73,9 @@ function plotdescription(
 	# TODO: add this to support different
 	# all_descriptors = Vector{Vector{Symbol}}(undef, _ndescriptions(descriptions))
 	# for i_desc in 1:_descriptions(descriptions)
-	# 	all_descriptors[i_desc] = Vector{Symbol}(undef, _nframes(descriptions))
-	# 	for i_frame 1:_nframes(descriptions[i_desc])
-	# 		all_descriptors[i_desc][i_frame] = _descriptors2grouped(group_descriptors)
+	# 	all_descriptors[i_desc] = Vector{Symbol}(undef, _nmodalities(descriptions))
+	# 	for i_modality 1:_nmodalities(descriptions[i_desc])
+	# 		all_descriptors[i_desc][i_modality] = _descriptors2grouped(group_descriptors)
 	# 	end
 	# end
 	singleton_groups = group_descriptors isa AbstractVector
@@ -97,22 +97,22 @@ function plotdescription(
 				first_col_name = Symbol(names(curr_description[1])[1])
 
 				# get only `descriptor` for each frame of the current description
-				mono_descriptor_multi_frame_desc = [
+				mono_descriptor_multi_modality_desc = [
 					curr_description[i][:, [first_col_name, descriptor]]
-				for i in 1:_nframes(curr_description)]
+				for i in 1:_nmodalities(curr_description)]
 
 				# for the current descriptor get the stats for all descriptions, frame by frame
 				d =
 					if !isnothing(cache_stats)
 						[(@scachefast "description" cache_stats SoleData._stat_description(
-							mono_desc_i_frame;
+							mono_desc_i_modality;
 							functions = functions,
-						)) for mono_desc_i_frame in mono_descriptor_multi_frame_desc]
+						)) for mono_desc_i_modality in mono_descriptor_multi_modality_desc]
 					else
 						[(SoleData._stat_description(
-							mono_desc_i_frame;
+							mono_desc_i_modality;
 							functions = functions,
-						)) for mono_desc_i_frame in mono_descriptor_multi_frame_desc]
+						)) for mono_desc_i_modality in mono_descriptor_multi_modality_desc]
 					end
 
 				push!(_stats, d)
@@ -126,10 +126,10 @@ function plotdescription(
 		descriptors = group_descriptors,
 		functions = functions,
 		windows = windows,
-		# NOTE: number of attributes does not change across different descriptions
-		n_attributes_per_frame = _nattributes(descriptions)[1],
-		# NOTE: number of dimensional frames does not change across different descriptions
-		num_dimensional_frame = _nframes(descriptions)[1],
+		# NOTE: number of variables does not change across different descriptions
+		n_variables_per_frame = _nvariables(descriptions)[1],
+		# NOTE: number of dimensional modalities does not change across different descriptions
+		num_dimensional_frame = _nmodalities(descriptions)[1],
 		kwargs...
 	)
 end
@@ -139,28 +139,28 @@ function _plotdescription(
 	descriptors::Union{<:AbstractVector{Symbol},<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}},
 	functions::AbstractVector{Function} = Function[var],
 	plot_kwargs::NamedTuple = NamedTuple(),
-	attribute_order::Symbol = :keep, # :increasing, :decreasing # TODO
+	variable_order::Symbol = :keep, # :increasing, :decreasing # TODO
 	layout::Symbol = :triangle, # :rectangle :pyramid
 	plot_dimension::Symbol = :twoD, # :threeD # TODO
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}},
-	on_x_axis::Symbol = :attributes, # :
-	attribute_names::Union{<:AbstractVector{<:AbstractString},Nothing} = nothing,
+	on_x_axis::Symbol = :variables, # :
+	variable_names::Union{<:AbstractVector{<:AbstractString},Nothing} = nothing,
 	join_plots::Bool = false,
-	n_attributes_per_frame::AbstractVector{<:Integer},
+	n_variables_per_frame::AbstractVector{<:Integer},
 	num_dimensional_frame::Integer
 )
 
 	@assert windows == [[[(1,0,0)]]] "$(windows)"
 	@assert length(functions) == 1
-	@assert on_x_axis in [:descriptors, :attributes]
+	@assert on_x_axis in [:descriptors, :variables]
 
 	allowed_plot_dimensionts = [:twoD, :threeD]
 	@assert plot_dimension in allowed_plot_dimensionts "Value `$(plot_dimension)` not " *
 		"allowed: available are $(allowed_plot_dimensionts)"
 
-	allowed_attribute_order = [:keep, :increasing, :decreasing]
-	@assert attribute_order in allowed_attribute_order "Value `$(attribute_order)` not " *
-		"allowed: available are $(allowed_attribute_order)"
+	allowed_variable_order = [:keep, :increasing, :decreasing]
+	@assert variable_order in allowed_variable_order "Value `$(variable_order)` not " *
+		"allowed: available are $(allowed_variable_order)"
 
 	allowed_layout = [:triangle, :rectangle, :pyramid]
 	@assert layout in allowed_layout "Value `$(layout)` not " *
@@ -181,42 +181,42 @@ function _plotdescription(
 	)])
 
 
-	max_n_attributes = (n_attributes_per_frame)|>maximum
+	max_n_variables = (n_variables_per_frame)|>maximum
 
 	if join_plots
 		mega_plot = bp()
 	else
-		plot_pyramids = Array{Plots.Plot}(undef, length(windows), pyramid_base_length, (on_x_axis == :attributes ? length(descriptors) : max_n_attributes), num_dimensional_frame)
+		plot_pyramids = Array{Plots.Plot}(undef, length(windows), pyramid_base_length, (on_x_axis == :variables ? length(descriptors) : max_n_variables), num_dimensional_frame)
 		for i in 1:length(plot_pyramids)
 			plot_pyramids[i] = bp()
 		end
 	end
 
 	# For each frame
-	for (i_frame, dim) in enumerate(num_dimensional_frame)
+	for (i_modality, dim) in enumerate(num_dimensional_frame)
 
 		if dim isa Symbol
-			# throw(ErrorException("`plotdescription` still not implemented for `$(dim)` frames"))
+			# throw(ErrorException("`plotdescription` still not implemented for `$(dim)` modalities"))
 			continue
 		elseif dim == 0
-			# throw(ErrorException("`plotdescription` still not implemented for static frames"))
+			# throw(ErrorException("`plotdescription` still not implemented for static modalities"))
 			continue
 		end
 
 		for (i_win, win) in enumerate(windows)
 
-			curr_frame_window = win[i_frame]
+			curr_frame_window = win[i_modality]
 
-			if on_x_axis == :attributes
+			if on_x_axis == :variables
 				# For each descriptor
 				for (i_descriptor_group,(descriptor_group_name,descrs)) in enumerate(descriptors)
 					for (i_descriptor,descriptor) in enumerate(descrs)
-						d = stats[i_descriptor_group][i_descriptor][i_win][i_frame];
+						d = stats[i_descriptor_group][i_descriptor][i_win][i_modality];
 						names = d[:,1]
-						n_attributes = nrow(d)
+						n_variables = nrow(d)
 						col = cs(descriptor, nameof(functions[1]))
 
-						x = collect(1:n_attributes)
+						x = collect(1:n_variables)
 						ys = d[:,col]
 
 						for i_chunk in 1:pyramid_base_length
@@ -236,24 +236,24 @@ function _plotdescription(
 				end
 			elseif on_x_axis == :descriptors
 
-				ds = [(stats[i_descriptor_group][i_descriptor][i_win][i_frame], descriptor) for (i_descriptor_group,(descriptor_group_name,descrs)) in enumerate(descriptors) for (i_descriptor,descriptor) in enumerate(descrs)];
+				ds = [(stats[i_descriptor_group][i_descriptor][i_win][i_modality], descriptor) for (i_descriptor_group,(descriptor_group_name,descrs)) in enumerate(descriptors) for (i_descriptor,descriptor) in enumerate(descrs)];
 				n_descriptors = length(ds)
 
 				# println(ds)
-				# For each attribute
-				for i_attribute in 1:n_attributes_per_frame[i_frame]
+				# For each variable
+				for i_variable in 1:n_variables_per_frame[i_modality]
 					x = collect(1:n_descriptors)
-					ys = [d[i_attribute, cs(descriptor, nameof(functions[1]))] for (d,descriptor) in ds]
+					ys = [d[i_variable, cs(descriptor, nameof(functions[1]))] for (d,descriptor) in ds]
 					names = [cs(descriptor, nameof(functions[1])) for (d,descriptor) in ds]
 					# println(ys)
 					for i_chunk in 1:pyramid_base_length
-						attribute_name = isnothing(attribute_names) ? "$(VARPREFIX)$(i_attribute)" : attribute_names[i_attribute]
-						plot!((join_plots ? mega_plot : plot_pyramids[i_win, i_chunk, i_attribute, num_dimensional_frame]),
+						variable_name = isnothing(variable_names) ? "$(VARPREFIX)$(i_variable)" : variable_names[i_variable]
+						plot!((join_plots ? mega_plot : plot_pyramids[i_win, i_chunk, i_variable, num_dimensional_frame]),
 							x,
 							# TODO: generalize on n-th function in functions
 							[v[i_chunk] for v in ys],
-							labels = string("$(attribute_name)"),
-							title = (join_plots ? "" : "$(attribute_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")"),
+							labels = string("$(variable_name)"),
+							title = (join_plots ? "" : "$(variable_name)$(pyramid_base_length == 1 ? "" : " $(i_chunk) / $(curr_frame_window[1][1])")"),
 							xticks = (1:length(x), string.(names)),
 							xrotation = 65,
 							xtickfontrotation = 65,
