@@ -166,7 +166,7 @@ function _plotdescription(
 	@assert layout in allowed_layout "Value `$(layout)` not " *
 		"allowed: available are $(allowed_layout)"
 
-	# concat symbols
+	# concatenate symbols
 	cs(s1::Symbol, s2::Symbol) = Symbol(string(s1, "_", s2))
 	# blank plots
 	bp() = plot() # plot(; ticks = false, grid = true, axis = true)
