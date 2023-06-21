@@ -16,7 +16,7 @@ function plotdescription(
 		<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}
 	},
 	windows::AbstractVector{<:AbstractVector{<:AbstractVector{<:NTuple{3,<:Integer}}}} =
-		[[[(t,0,0) for i in 1:d] for d in dimension(md)] for t in [1,2,4,8]],
+		[[[(t,0,0) for i in 1:d] for d in dimensionality(md)] for t in [1,2,4,8]],
 	cache_descriptions::Union{<:AbstractString,Nothing} = nothing,
 	kwargs...
 )
