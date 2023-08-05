@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(SoleViz, :DocTestSetup, :(using SoleViz); recursive=true)
 
 makedocs(;
     modules=[SoleViz],
-    authors="Eduard I. STAN, Giovanni PAGLIARINI, Federico MANZELLA",
+    authors="Federico Manzella, Giovanni Pagliarini, Eduard I. Stan",
     repo="https://github.com/aclai-lab/SoleViz.jl/blob/{commit}{path}#{line}",
     sitename="SoleViz.jl",
     format=Documenter.HTML(;
@@ -20,5 +20,7 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/aclai-lab/SoleViz.jl",
-    devbranch="main",
+    target = "build",
+    branch = "gh-pages",
+    versions = ["main" => "main", "stable" => "v^", "v#.#", "dev" => "dev"],
 )
