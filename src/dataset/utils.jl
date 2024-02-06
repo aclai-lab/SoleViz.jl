@@ -153,7 +153,7 @@ function _framedims(d::AbstractVector{<:AbstractArray})
     return length(d) > 0 ? _framedims(d[1]) : []
 end
 function _framedims(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
+    @assert _is_description(d) "`d` has to be a MultiDataset description"
 
     # NOTE: assumed all variables have same dimension
     return _framedims(d[1,2])
@@ -184,7 +184,7 @@ function _get_win(d::AbstractVector{<:AbstractArray})
     return length(d) > 0 ? _get_win(d[1]) : []
 end
 function _get_win(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
+    @assert _is_description(d) "`d` has to be a MultiDataset description"
 
     # NOTE: assumed all variables have same dimension
     return _get_win(d[1,2])
@@ -197,7 +197,7 @@ function _get_win(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
 end
 
 function _nvariables(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
+    @assert _is_description(d) "`d` has to be a MultiDataset description"
 
     return nrow(d)
 end
@@ -209,7 +209,7 @@ function _nvariables(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
 end
 
 function _variables(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
+    @assert _is_description(d) "`d` has to be a MultiDataset description"
 
     return Symbol.(d[:,1])
 end
@@ -221,7 +221,7 @@ function _variables(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
 end
 
 function _ndescriptors(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
+    @assert _is_description(d) "`d` has to be a MultiDataset description"
 
     return ncol(d) - 1
 end
@@ -233,7 +233,7 @@ function _ndescriptors(d::AbstractVector{<:AbstractVector{<:AbstractDataFrame}})
 end
 
 function _descriptors(d::AbstractDataFrame)
-    @assert _is_description(d) "`d` has to be a MultiModalDataset description"
+    @assert _is_description(d) "`d` has to be a MultiDataset description"
 
     return Symbol.(names(d)[2:end])
 end

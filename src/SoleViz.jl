@@ -2,7 +2,7 @@ module SoleViz
 
 using Reexport
 using SoleBase
-using SoleData
+using MultiData
 using Statistics
 using DataFrames
 using DataStructures

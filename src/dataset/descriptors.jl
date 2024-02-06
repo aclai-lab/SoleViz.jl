@@ -10,7 +10,7 @@ TODO: docs
 - Add more user-friendly interface for `windows` parameter
 """
 function plotdescription(
-	md::AbstractMultiModalDataset;
+	md::AbstractMultiDataset;
 	group_descriptors::Union{ # TODO: this should be a Dict{framedimension,itself}
 		<:AbstractVector{Symbol},
 		<:AbstractDict{<:AbstractString,<:AbstractVector{Symbol}}
@@ -31,13 +31,13 @@ function plotdescription(
 	Threads.@threads for (i, curr_windows) in collect(enumerate(windows))
 		descriptions[i] =
 			if !isnothing(cache_descriptions)
-				@scachefast "description" cache_descriptions SoleData.describe(
+				@scachefast "description" cache_descriptions MultiData.describe(
 					md,
 					desc = desc,
 					t = curr_windows
 				)
 			else
-				SoleData.describe(md, desc = desc, t = curr_windows)
+				MultiData.describe(md, desc = desc, t = curr_windows)
 			end
 	end
 
@@ -104,12 +104,12 @@ function plotdescription(
 				# for the current descriptor get the stats for all descriptions, frame by frame
 				d =
 					if !isnothing(cache_stats)
-						[(@scachefast "description" cache_stats SoleData._stat_description(
+						[(@scachefast "description" cache_stats MultiData._stat_description(
 							mono_desc_i_modality;
 							functions = functions,
 						)) for mono_desc_i_modality in mono_descriptor_multi_modality_desc]
 					else
-						[(SoleData._stat_description(
+						[(MultiData._stat_description(
 							mono_desc_i_modality;
 							functions = functions,
 						)) for mono_desc_i_modality in mono_descriptor_multi_modality_desc]
