@@ -4,7 +4,7 @@ CurrentModule = SoleViz
 
 # SoleViz
 
-Documentation for [SoleViz](https://github.com/aclai-lab/SoleViz.jl).
+Welcome to the documentation for [SoleViz](https://github.com/aclai-lab/SoleViz.jl).
 
 ```@index
 ```

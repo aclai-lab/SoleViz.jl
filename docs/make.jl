@@ -6,9 +6,10 @@ DocMeta.setdocmeta!(SoleViz, :DocTestSetup, :(using SoleViz); recursive=true)
 makedocs(;
     modules=[SoleViz],
     authors="Lorenzo Balboni, Federico Manzella, Giovanni Pagliarini, Eduard I. Stan",
-    repo="https://github.com/aclai-lab/SoleViz.jl/blob/{commit}{path}#{line}",
+    repo=Documenter.Remotes.GitHub("aclai-lab", "SoleViz.jl"),
     sitename="SoleViz.jl",
     format=Documenter.HTML(;
+        size_threshold = 4000000,
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://aclai-lab.github.io/SoleViz.jl",
         assets=String[],
@@ -20,8 +21,7 @@ makedocs(;
 
 deploydocs(;
     repo = "github.com/aclai-lab/SoleViz.jl",
-    devbranch = "main",
     target = "build",
     branch = "gh-pages",
-    versions = ["stable" => "v^", "v#.#"],
+    versions = ["main" => "main", "stable" => "v^", "v#.#", "dev" => "dev"],
 )
